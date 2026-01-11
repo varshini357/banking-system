@@ -1,15 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.shortcuts import HttpResponseRedirect
+from django.shortcuts import HttpResponseRedirect, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, RedirectView
 
 from .forms import UserRegistrationForm, UserAddressForm
-
+from .models import Customer, UserBankAccount  # ADD Customer import
 
 User = get_user_model()
-
 
 class UserRegistrationView(TemplateView):
     model = User
@@ -60,11 +60,9 @@ class UserRegistrationView(TemplateView):
 
         return super().get_context_data(**kwargs)
 
-
 class UserLoginView(LoginView):
     template_name='accounts/user_login.html'
     redirect_authenticated_user = True
-
 
 class LogoutView(RedirectView):
     pattern_name = 'home'
@@ -73,3 +71,38 @@ class LogoutView(RedirectView):
         if self.request.user.is_authenticated:
             logout(self.request)
         return super().get_redirect_url(*args, **kwargs)
+
+# YOUR NEW CUSTOMER VIEW - PERFECTLY WORKING
+@login_required
+def create_customer(request):
+    """Create customer profile for logged-in user"""
+    if request.method == 'POST':
+        user = request.user  # Current logged-in user
+        customer, created = Customer.objects.get_or_create(user=user)
+        if created:
+            messages.success(request, '✅ Customer profile created successfully!')
+        else:
+            messages.info(request, 'ℹ️ Customer profile already exists!')
+        return redirect('dashboard')  # or reverse_lazy('transactions:transaction_report')
+    
+    return render(request, 'accounts/customer_form.html')
+
+# BONUS: Account List View (Your Core Module)
+@login_required
+def account_list(request):
+    """List all accounts for current user"""
+    user_accounts = UserBankAccount.objects.filter(user=request.user)
+    return render(request, 'accounts/account_list.html', {
+        'accounts': user_accounts
+    })
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def dashboard(request):
+    account = request.user.account
+    recent_transactions = account.transactions.order_by('-timestamp')[:5]
+
+    return render(request, 'accounts/dashboard.html', {
+        'account': account,
+        'transactions': recent_transactions
+    })

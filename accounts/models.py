@@ -1,15 +1,20 @@
 from decimal import Decimal
-
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, User
 from django.core.validators import (
     MinValueValidator,
     MaxValueValidator,
 )
 from django.db import models
-
 from .constants import GENDER_CHOICE
 from .managers import UserManager
 
+# YOUR NEW Customer MODEL (ADD AT TOP)
+class Customer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone = models.CharField(max_length=15, blank=True)
+    
+    def __str__(self):
+        return self.user.email
 
 class User(AbstractUser):
     username = None
@@ -28,7 +33,6 @@ class User(AbstractUser):
         if hasattr(self, 'account'):
             return self.account.balance
         return 0
-
 
 class BankAccountType(models.Model):
     name = models.CharField(max_length=128)
@@ -53,8 +57,6 @@ class BankAccountType(models.Model):
     def calculate_interest(self, principal):
         """
         Calculate interest for each account type.
-
-        This uses a basic interest calculation formula
         """
         p = principal
         r = self.annual_interest_rate
@@ -65,13 +67,15 @@ class BankAccountType(models.Model):
 
         return round(interest, 2)
 
-
+# MODIFIED UserBankAccount - ADDED CUSTOMER FIELD
 class UserBankAccount(models.Model):
     user = models.OneToOneField(
         User,
         related_name='account',
         on_delete=models.CASCADE,
     )
+    # NEW CUSTOMER FIELD ADDED HERE 👇
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True)
     account_type = models.ForeignKey(
         BankAccountType,
         related_name='accounts',
@@ -99,15 +103,12 @@ class UserBankAccount(models.Model):
     def get_interest_calculation_months(self):
         """
         List of month numbers for which the interest will be calculated
-
-        returns [2, 4, 6, 8, 10, 12] for every 2 months interval
         """
         interval = int(
             12 / self.account_type.interest_calculation_per_year
         )
         start = self.interest_start_date.month
         return [i for i in range(start, 13, interval)]
-
 
 class UserAddress(models.Model):
     user = models.OneToOneField(

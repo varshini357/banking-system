@@ -91,3 +91,19 @@ class TransactionDateRangeForm(forms.Form):
                 raise forms.ValidationError("Please select a date range.")
         except (ValueError, AttributeError):
             raise forms.ValidationError("Invalid date range")
+class FundTransferForm(forms.Form):
+    to_account = forms.IntegerField(label="To Account Number")
+    amount = forms.DecimalField(max_digits=12, decimal_places=2)
+
+    def __init__(self, *args, **kwargs):
+        self.from_account = kwargs.pop('account')
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned = super().clean()
+        amount = cleaned.get('amount')
+
+        if amount > self.from_account.balance:
+            raise forms.ValidationError("Insufficient balance")
+
+        return cleaned

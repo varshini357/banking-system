@@ -1,0 +1,29 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mt-6">Dashboard</h1>
+
+<div class="bg-white p-6 mt-4 rounded shadow">
+    <p><strong>Account Number:</strong> {{ account.account_no }}</p>
+    <p><strong>Account Type:</strong> {{ account.account_type.name }}</p>
+    <p class="text-xl mt-2">
+        <strong>Balance:</strong> ₹ {{ account.balance }}
+    </p>
+</div>
+
+<h2 class="text-xl font-bold mt-6">Recent Transactions</h2>
+<table class="w-full mt-2 border">
+<tr class="bg-gray-200">
+    <th>Type</th><th>Amount</th><th>Date</th>
+</tr>
+{% for tx in transactions %}
+<tr class="text-center border">
+    <td>{{ tx.get_transaction_type_display }}</td>
+    <td>{{ tx.amount }}</td>
+    <td>{{ tx.timestamp }}</td>
+</tr>
+{% empty %}
+<tr><td colspan="3">No transactions yet</td></tr>
+{% endfor %}
+</table>
+{% endblock %}

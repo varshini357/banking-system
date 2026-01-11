@@ -11,3 +11,6 @@ urlpatterns = [
     path("report/", TransactionRepostView.as_view(), name="transaction_report"),
     path("withdraw/", WithdrawMoneyView.as_view(), name="withdraw_money"),
 ]
+from .views import fund_transfer
+
+path("transfer/", fund_transfer, name="fund_transfer"),

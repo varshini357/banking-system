@@ -1,0 +1,19 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mt-6">My Accounts</h1>
+
+<table class="w-full mt-4 border">
+<tr class="bg-gray-300">
+    <th>Account No</th>
+    <th>Type</th>
+    <th>Balance</th>
+</tr>
+{% for acc in accounts %}
+<tr class="text-center border">
+    <td>{{ acc.account_no }}</td>
+    <td>{{ acc.account_type.name }}</td>
+    <td>{{ acc.balance }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
