@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import get_user_model, login, logout
+from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect
@@ -13,7 +13,7 @@ User = get_user_model()
 
 
 # ----------------------------------
-# USER REGISTRATION
+# USER REGISTRATION (eBanking)
 # ----------------------------------
 class UserRegistrationView(TemplateView):
     template_name = 'accounts/user_registration.html'
@@ -34,15 +34,16 @@ class UserRegistrationView(TemplateView):
             address.user = user
             address.save()
 
-            login(request, user)
+            # create customer profile only (NO account auto creation)
+            Customer.objects.get_or_create(user=user)
 
             messages.success(
                 request,
-                f"Account created successfully. "
-                f"Your account number is {user.account.account_no}"
+                "Account Created successfully. Please login to continue."
             )
 
-            return redirect('accounts:dashboard')
+            # IMPORTANT: do NOT auto login
+            return redirect('accounts:user_login')
 
         return render(
             request,
@@ -83,16 +84,16 @@ class LogoutView(RedirectView):
 
 
 # ----------------------------------
-# DASHBOARD (SAFE)
+# DASHBOARD (Logged-in user only)
 # ----------------------------------
 @login_required
 def dashboard(request):
-    try:
-        account = request.user.account
-    except UserBankAccount.DoesNotExist:
-        messages.error(
+    account = UserBankAccount.objects.filter(user=request.user).first()
+
+    if not account:
+        messages.info(
             request,
-            "You do not have a bank account yet. Please contact admin."
+            "No bank account found for your profile."
         )
         return redirect('accounts:account_list')
 
@@ -109,11 +110,20 @@ def dashboard(request):
 
 
 # ----------------------------------
-# ACCOUNT LIST
+# VIEW ALL ACCOUNTS (CORE MODULE)
 # ----------------------------------
 @login_required
 def account_list(request):
-    accounts = UserBankAccount.objects.filter(user=request.user)
+    """
+    CORE REQUIREMENT:
+    View Accounts - List ALL accounts with balances
+    """
+
+    accounts = UserBankAccount.objects.select_related(
+        'user',
+        'account_type',
+        'user__customer'
+    ).all()
 
     return render(
         request,
@@ -125,7 +135,7 @@ def account_list(request):
 
 
 # ----------------------------------
-# CREATE CUSTOMER (OPTIONAL / SAFE)
+# CREATE CUSTOMER (CORE – optional)
 # ----------------------------------
 @login_required
 def create_customer(request):

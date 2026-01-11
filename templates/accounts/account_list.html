@@ -1,19 +1,42 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<h1 class="text-2xl font-bold mt-6">My Accounts</h1>
+
+<h1 class="text-2xl font-bold mt-6">All Bank Accounts</h1>
 
 <table class="w-full mt-4 border">
-<tr class="bg-gray-300">
-    <th>Account No</th>
-    <th>Type</th>
-    <th>Balance</th>
-</tr>
-{% for acc in accounts %}
-<tr class="text-center border">
-    <td>{{ acc.account_no }}</td>
-    <td>{{ acc.account_type.name }}</td>
-    <td>{{ acc.balance }}</td>
-</tr>
-{% endfor %}
+    <tr class="bg-gray-300">
+        <th class="border px-2 py-1">Customer Name</th>
+        <th class="border px-2 py-1">Email</th>
+        <th class="border px-2 py-1">Account No</th>
+        <th class="border px-2 py-1">Account Type</th>
+        <th class="border px-2 py-1">Balance</th>
+    </tr>
+
+    {% for acc in accounts %}
+    <tr class="text-center border">
+        <td class="border px-2 py-1">
+            {{ acc.user.first_name }} {{ acc.user.last_name }}
+        </td>
+        <td class="border px-2 py-1">
+            {{ acc.user.email }}
+        </td>
+        <td class="border px-2 py-1">
+            {{ acc.account_no }}
+        </td>
+        <td class="border px-2 py-1">
+            {{ acc.account_type.name }}
+        </td>
+        <td class="border px-2 py-1">
+            ₹ {{ acc.balance }}
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5" class="text-center p-4">
+            No accounts found
+        </td>
+    </tr>
+    {% endfor %}
 </table>
+
 {% endblock %}
